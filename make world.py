@@ -2,8 +2,8 @@ import pygame
 
 pygame.init()
 
-clock = pygame.image.Clock()
-
+clock = pygame.time.Clock()
+fps = 60
 
 width, height = 650, 650
 screen = pygame.display.set_mode((width, height))
@@ -64,16 +64,38 @@ class World():
             screen.blit(tile[0], tile[1])
 
 
+class Player():
+    def __init__(self, x, y):
+        img = pygame.image.load('img/Sprite-0001.png')
+        self.img = pygame.transform.scale(img, (50, 65))
+        self.rect = self.img.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    #рисуем персонажа на экран
+    def update(self):
+        screen.blit(self.img, self.rect)
+
+    #движение героя
+
+
+
 world = World(world_data)
+player = Player(65, height - 130)
+
 run = True
 while run:
+    clock.tick(fps)
+    #загружаем фон
     screen.blit(sky_image, (0, 0))
     screen.blit(hills_image, (0, 0))
     screen.blit(forest_image, (0, 0))
     screen.blit(bushes_image, (0, 0))
     screen.blit(ground_image, (0, 0))
+    #рисуем поле
     draw_board()
     world.draw()
+    player.update()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
