@@ -1,7 +1,7 @@
 import pygame
 import math
 
-
+#игрок
 class Player:
     def __init__(self, x=300, y=300, speed=8):
         self.x = x
