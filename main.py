@@ -216,7 +216,7 @@ stay_timer = 0
 sprite_num = 0
 if __name__ == '__main__':
     pygame.init()
-    size = width, height = [1920, 1080]
+    size = width, height = [1200, 1080]
     screen = pygame.display.set_mode(size, pygame.SCALED | pygame.FULLSCREEN, vsync=1)
     font = pygame.font.Font(None, 20)
     running = True
