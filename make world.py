@@ -18,6 +18,7 @@ ground_image = pygame.image.load('img/4Ground.png')
 
 tile_size = 65
 
+
 #рисуем клеточное поле
 def draw_board():
     for a in range(0, 10):
@@ -71,12 +72,42 @@ class Player():
         self.rect = self.img.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.vel_y = 0
+        self.jump = False
 
-    #рисуем персонажа на экран
     def update(self):
-        screen.blit(self.img, self.rect)
+        #движение героя
+        dx = 0
+        dy = 0
+        #нажатие на кнопки
+        key = pygame.key.get_pressed()
+        if key[pygame.K_LEFT]:
+            dx -= 10
+        if key[pygame.K_RIGHT]:
+            dx += 10
+        if key[pygame.K_SPACE] and self.jump is False:
+            self.vel_y = -15
+            self.jump = True
 
-    #движение героя
+        if key[pygame.K_SPACE] is False:
+            self.jump = False
+
+        #гравитация при прыжке
+        self.vel_y += 1
+        if self.vel_y > 10:
+            self.vel_y = 10
+        dy += self.vel_y
+
+        #новые координаты
+        self.rect.x += dx
+        self.rect.y += dy
+
+        if self.rect.bottom > height:
+            self.rect.bottom = height
+            dy = 0
+
+        #рисуем персонажа на экран
+        screen.blit(self.img, self.rect)
 
 
 
