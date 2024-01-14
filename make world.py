@@ -18,9 +18,13 @@ forest_image = pygame.image.load('img/6Forest.png')
 bushes_image = pygame.image.load('img/5BackBushes.png')
 ground_image = pygame.image.load('img/4Ground.png')
 restart_image = pygame.image.load('img/restart.png')
+start_image = pygame.image.load('img/start.png')
+exit_image = pygame.image.load('img/exit.png')
+menu_image = pygame.image.load('img/menu.png')
 
 tile_size = 55
 game_over = 0
+main_menu = True
 
 
 # рисуем клеточное поле
@@ -235,36 +239,47 @@ hedg_group = pygame.sprite.Group()
 world = World(world_data)
 
 #кнопки
+start_button = Button(width // 2 - 320, height // 2 + 125, start_image)
+exit_button = Button(width // 2 + 110, height // 2 + 125, exit_image)
 restart_button = Button(width // 2 - 100, height // 2 + 150, restart_image)
+
 
 run = True
 while run:
     clock.tick(fps)
-    # загружаем фон
-    screen.blit(sky_image, (0, 0))
-    screen.blit(hills_image, (0, 0))
-    screen.blit(forest_image, (0, 0))
-    screen.blit(bushes_image, (0, 0))
-    screen.blit(ground_image, (0, 0))
-    # рисуем поле
-    draw_board()
-    world.draw()
+    screen.blit(menu_image, (0, 0))
+    if main_menu == True:
+        if exit_button.draw():
+            run = False
+        if start_button.draw():
+            main_menu = False
+    else:
+        # загружаем фон
+        screen.blit(sky_image, (0, 0))
+        screen.blit(hills_image, (0, 0))
+        screen.blit(forest_image, (0, 0))
+        screen.blit(bushes_image, (0, 0))
+        screen.blit(ground_image, (0, 0))
+        # рисуем поле
+        draw_board()
+        world.draw()
 
-    if game_over == 0:
-        hedg_group.update()
+        if game_over == 0:
+            hedg_group.update()
 
-    hedg_group.draw(screen)
-    bushes_group.draw(screen)
+        hedg_group.draw(screen)
+        bushes_group.draw(screen)
 
-    game_over = player.update(game_over)
-    #когда прсонаж умирает
-    if game_over == 1:
-        if restart_button.draw():
-            player.reset(65, height - 130)
-            game_over = 0
+        game_over = player.update(game_over)
+        #когда прсонаж умирает
+        if game_over == 1:
+            if restart_button.draw():
+                player.reset(65, height - 130)
+                game_over = 0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
     pygame.display.flip()
+
 pygame.quit()
