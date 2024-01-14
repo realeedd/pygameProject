@@ -1,6 +1,8 @@
 import pygame
 from pygame.locals import *
+import pickle
 
+from os import path
 
 pygame.init()
 
@@ -25,6 +27,7 @@ menu_image = pygame.image.load('img/menu.png')
 tile_size = 55
 game_over = 0
 main_menu = True
+level = 1
 
 
 # рисуем клеточное поле
@@ -34,6 +37,23 @@ def draw_board():
         pygame.draw.line(screen, (255, 255, 255), (a * tile_size, 0), (a * tile_size, height))
 
 
+#загрузка нового уровня
+def reset_level(level):
+    player.reset(65, height - 130)
+    hedg_group.empty()
+    bushes_group.empty()
+    exit_group.empty()
+    if path.exists(f'level{level}_data'):
+        pickle_in = open(f'level{level}_data', 'rb')
+        world_data = pickle.load(pickle_in)
+    world = World(world_data)
+
+    return world
+
+
+
+
+'''
 world_data = [
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -41,14 +61,14 @@ world_data = [
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 4, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
     [1, 0, 0, 0, 0, 1, 1, 3, 3, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
-
+'''
 
 class Button:
     def __init__(self, x, y, image):
@@ -137,6 +157,9 @@ class Player:
             if pygame.sprite.spritecollide(self, bushes_group, False):
                 game_over = 1
                 #print(game_over)
+            #прохождение уровня
+            if pygame.sprite.spritecollide(self, exit_group, False):
+                game_over = 2
 
             #новые координаты
             self.rect.x += dx
@@ -194,6 +217,9 @@ class World():
                 if tile == 3:
                     bush = Bushes(c_k * tile_size, r_k * tile_size)
                     bushes_group.add(bush)
+                if tile == 4:
+                    exit = Exit(c_k * tile_size, r_k * tile_size - 45)
+                    exit_group.add(exit)
                 c_k += 1
             r_k += 1
 
@@ -229,13 +255,31 @@ class Bushes(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.move_dir = 1
-        self.move_k = 0
+
+
+class Exit(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load('img/exit_door.png')
+        self.image = pygame.transform.scale(img, (55, 100))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+
 
 
 player = Player(65, height - 130)
+
 bushes_group = pygame.sprite.Group()
 hedg_group = pygame.sprite.Group()
+exit_group = pygame.sprite.Group()
+
+#уровни
+if path.exists(f'level{level}_data'):
+    pickle_in = open(f'level{level}_data', 'rb')
+    world_data = pickle.load(pickle_in)
+
 world = World(world_data)
 
 #кнопки
@@ -269,6 +313,7 @@ while run:
 
         hedg_group.draw(screen)
         bushes_group.draw(screen)
+        exit_group.draw(screen)
 
         game_over = player.update(game_over)
         #когда прсонаж умирает
@@ -276,6 +321,15 @@ while run:
             if restart_button.draw():
                 player.reset(65, height - 130)
                 game_over = 0
+        #прохождение уровня
+        if game_over == 2:
+            level += 1
+            if level <= 5:
+                world_data = []
+                world = reset_level(level)
+                game_over = 0
+            else:
+                pass
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
