@@ -13,35 +13,21 @@ width, height = 660, 660
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Magical Explore')
 
-# музыка
-pygame.mixer.music.load('img/music.mp3')
-pygame.mixer.music.play(-1, 0.0, 5000)
-
 # фон
 sky_image = pygame.image.load('img/8Sky.png')
 hills_image = pygame.image.load('img/7Hills.png')
 forest_image = pygame.image.load('img/6Forest.png')
 bushes_image = pygame.image.load('img/5BackBushes.png')
 ground_image = pygame.image.load('img/4Ground.png')
-# кнопки
 restart_image = pygame.image.load('img/restart.png')
 start_image = pygame.image.load('img/start.png')
 exit_image = pygame.image.load('img/exit.png')
 menu_image = pygame.image.load('img/menu.png')
-levels_image = pygame.image.load('img/levels.png')
-
-# значки уровней
-first_image = pygame.image.load('img/first.png')
-second_image = pygame.image.load('img/second.png')
-third_image = pygame.image.load('img/third.png')
-fourth_image = pygame.image.load('img/fourth.png')
-fifth_image = pygame.image.load('img/fifth.png')
 
 tile_size = 55
 game_over = 0
 main_menu = True
 level = 1
-levels_menu = False
 
 
 # рисуем клеточное поле
@@ -51,7 +37,7 @@ def draw_board():
         pygame.draw.line(screen, (255, 255, 255), (a * tile_size, 0), (a * tile_size, height))
 
 
-# загрузка нового уровня
+#загрузка нового уровня
 def reset_level(level):
     player.reset(65, height - 130)
     hedg_group.empty()
@@ -63,6 +49,8 @@ def reset_level(level):
     world = World(world_data)
 
     return world
+
+
 
 
 '''
@@ -82,7 +70,6 @@ world_data = [
 ]
 '''
 
-
 class Button:
     def __init__(self, x, y, image):
         self.image = image
@@ -91,11 +78,11 @@ class Button:
         self.rect.y = y
         self.clicked = False
 
-    # рисуем кнопку
+    #рисуем кнопку
     def draw(self):
         action = False
         position = pygame.mouse.get_pos()
-        # кнопка нажата
+        #кнопка нажата
         if self.rect.collidepoint(position):
             if pygame.mouse.get_pressed()[0] == 1 or pygame.key.get_pressed()[K_RETURN] and self.clicked == False:
                 action = True
@@ -103,22 +90,23 @@ class Button:
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
 
+
+
         screen.blit(self.image, self.rect)
 
         return action
-
 
 class Player:
     def __init__(self, x, y):
         self.reset(x, y)
 
     def update(self, game_over):
-        # движение героя
+        #движение героя
         dx = 0
         dy = 0
         walk = 2
         if game_over == 0:
-            # нажатие на кнопки
+            #нажатие на кнопки
             key = pygame.key.get_pressed()
             if key[pygame.K_LEFT]:
                 dx -= 10
@@ -132,7 +120,7 @@ class Player:
 
             if key[pygame.K_SPACE] is False or key[pygame.K_UP] is False:
                 self.jump = False
-            # анимация
+            #анимация
             self.k += 1
             if self.k > walk:
                 self.k = 0
@@ -141,12 +129,12 @@ class Player:
                     self.ind = 0
                 self.img = self.images[self.ind]
 
-            # гравитация при прыжке
+            #гравитация при прыжке
             self.vel_y += 1
             if self.vel_y > 10:
                 self.vel_y = 10
             dy += self.vel_y
-            # столкновение
+             #столкновение
             self.free = True
             for tile in world.tile_list:
                 # по x
@@ -154,26 +142,26 @@ class Player:
                     dx = 0
                 # по y
                 if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                    # прыжок
+                    #прыжок
                     if self.vel_y < 0:
                         dy = tile[1].bottom - self.rect.top
                         self.vel_y = 0
-                    # падение
+                    #падение
                     elif self.vel_y >= 0:
                         dy = tile[1].top - self.rect.bottom
                         self.vel_y = 0
                         self.free = False
-            # cолкновение с врагами
+            #cолкновение с врагами
             if pygame.sprite.spritecollide(self, hedg_group, False):
                 game_over = 1
             if pygame.sprite.spritecollide(self, bushes_group, False):
                 game_over = 1
-                # print(game_over)
-            # прохождение уровня
+                #print(game_over)
+            #прохождение уровня
             if pygame.sprite.spritecollide(self, exit_group, False):
                 game_over = 2
 
-            # новые координаты
+            #новые координаты
             self.rect.x += dx
             self.rect.y += dy
 
@@ -181,12 +169,11 @@ class Player:
                 self.rect.bottom = height
                 dy = 0
 
-        # рисуем персонажа на экран
+        #рисуем персонажа на экран
         screen.blit(self.img, self.rect)
         pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
 
         return game_over
-
     def reset(self, x, y):
         self.images = []
         self.ind = 0
@@ -206,7 +193,6 @@ class Player:
         self.vel_y = 0
         self.jump = False
         self.free = True
-
 
 class World():
     def __init__(self, data):
@@ -281,71 +267,36 @@ class Exit(pygame.sprite.Sprite):
         self.rect.y = y
 
 
+
+
 player = Player(65, height - 130)
 
 bushes_group = pygame.sprite.Group()
 hedg_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
 
-# уровни
+#уровни
 if path.exists(f'level{level}_data'):
     pickle_in = open(f'level{level}_data', 'rb')
     world_data = pickle.load(pickle_in)
 
 world = World(world_data)
 
-# кнопки
-start_button = Button(width // 2 - 320, height // 2 - 100, start_image)
-exit_button = Button(width // 2 + 120, height // 2 + 230, exit_image)
-levels_button = Button(width // 2 + - 320, height // 2, levels_image)
+#кнопки
+start_button = Button(width // 2 - 320, height // 2 + 125, start_image)
+exit_button = Button(width // 2 + 110, height // 2 + 125, exit_image)
 restart_button = Button(width // 2 - 100, height // 2 + 150, restart_image)
 
-# кнопки выбора уровня
-first_button = Button(width // 2 - 300, height // 2 - 100, first_image)
-second_button = Button(width // 2 - 100, height // 2 - 100, second_image)
-third_button = Button(width // 2 + 150, height // 2 - 100, third_image)
-fourth_button = Button(width // 2 - 200, height // 2 + 50, fourth_image)
-fifth_button = Button(width // 2 + 70, height // 2 + 50, fifth_image)
 
 run = True
 while run:
     clock.tick(fps)
     screen.blit(menu_image, (0, 0))
-
     if main_menu == True:
         if exit_button.draw():
             run = False
         if start_button.draw():
             main_menu = False
-        if levels_button.draw():
-            main_menu = False
-            levels_menu = True
-    #меню
-    elif levels_menu == True:
-        screen.blit(menu_image, (0, 0))
-        if first_button.draw():
-            levels_menu = False
-            level = 1
-            world_data = []
-            world = reset_level(level)
-            game_over = 0
-
-        if second_button.draw():
-            levels_menu = False
-            level = 2
-            world_data = []
-            world = reset_level(level)
-            game_over = 0
-
-        if third_button.draw():
-            levels_menu = False
-
-        if fourth_button.draw():
-            levels_menu = False
-
-        if fifth_button.draw():
-            levels_menu = False
-
     else:
         # загружаем фон
         screen.blit(sky_image, (0, 0))
@@ -365,13 +316,12 @@ while run:
         exit_group.draw(screen)
 
         game_over = player.update(game_over)
-        # когда прсонаж умирает
+        #когда прсонаж умирает
         if game_over == 1:
             if restart_button.draw():
                 player.reset(65, height - 130)
                 game_over = 0
-
-        # прохождение уровня
+        #прохождение уровня
         if game_over == 2:
             level += 1
             if level <= 5:
