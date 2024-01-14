@@ -14,7 +14,7 @@ screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Magical Explore')
 
 # музыка
-pygame.mixer.music.load('img/music.mp3')
+pygame.mixer.music.load('img/Good Day So Far!.wav')
 pygame.mixer.music.play(-1, 0.0, 5000)
 
 # фон
@@ -42,6 +42,13 @@ game_over = 0
 main_menu = True
 level = 1
 levels_menu = False
+#количество монеток
+k = 0
+#для текста
+font = pygame.font.SysFont('Pixel Digivolve Cyrillic', 40)
+font_game_over = pygame.font.SysFont('Pixel Digivolve Cyrillic', 70)
+white = (255, 255, 255)
+red = pygame.Color('red')
 
 
 # рисуем клеточное поле
@@ -49,6 +56,11 @@ def draw_board():
     for a in range(0, 12):
         pygame.draw.line(screen, (255, 255, 255), (0, a * tile_size), (width, a * tile_size))
         pygame.draw.line(screen, (255, 255, 255), (a * tile_size, 0), (a * tile_size, height))
+
+
+def draw_text(text, font, color, x, y):
+    img = font.render(text, True, color)
+    screen.blit(img, (x, y))
 
 
 # загрузка нового уровня
@@ -180,7 +192,8 @@ class Player:
             if self.rect.bottom > height:
                 self.rect.bottom = height
                 dy = 0
-
+        elif game_over == 1:
+            draw_text('Вы погибли', font_game_over, red, (width // 2) - 220, height // 2)
         # рисуем персонажа на экран
         screen.blit(self.img, self.rect)
         pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
@@ -234,6 +247,9 @@ class World():
                 if tile == 4:
                     exit = Exit(c_k * tile_size, r_k * tile_size - 45)
                     exit_group.add(exit)
+                if tile == 5:
+                    coin = Coins(c_k * tile_size + 20 , r_k * tile_size + 30)
+                    coin_group.add(coin)
                 c_k += 1
             r_k += 1
 
@@ -271,6 +287,15 @@ class Bushes(pygame.sprite.Sprite):
         self.rect.y = y
 
 
+class Coins(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load('img/crystal.png')
+        self.image = pygame.transform.scale(img, (32, 32))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
 class Exit(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -281,11 +306,15 @@ class Exit(pygame.sprite.Sprite):
         self.rect.y = y
 
 
-player = Player(65, height - 130)
+player = Player(55, height - 130)
 
 bushes_group = pygame.sprite.Group()
+coin_group = pygame.sprite.Group()
 hedg_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
+
+coin_pic = Coins(tile_size //2, tile_size // 2)
+coin_group.add(coin_pic)
 
 # уровни
 if path.exists(f'level{level}_data'):
@@ -357,29 +386,42 @@ while run:
         draw_board()
         world.draw()
 
-        if game_over == 0:
-            hedg_group.update()
-
         hedg_group.draw(screen)
         bushes_group.draw(screen)
+        coin_group.draw(screen)
         exit_group.draw(screen)
 
+        if game_over == 0:
+            hedg_group.update()
+            if pygame.sprite.spritecollide(player, coin_group, True):
+                k += 1
+            draw_text('X ' + str(k), font, white, tile_size , 10)
+
+
         game_over = player.update(game_over)
-        # когда прсонаж умирает
+        # когда персонаж умирает
         if game_over == 1:
             if restart_button.draw():
+                world_data = []
                 player.reset(65, height - 130)
                 game_over = 0
+                k = 0
 
         # прохождение уровня
         if game_over == 2:
             level += 1
-            if level <= 5:
+            if level <= 2:
                 world_data = []
                 world = reset_level(level)
                 game_over = 0
             else:
-                pass
+                draw_text('Игра пройдена!', font_game_over, red, (width // 2) - 320, height // 2)
+                if restart_button.draw():
+                    level = 1
+                    world_data = []
+                    world = reset_level(level)
+                    game_over = 0
+                    k = 0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

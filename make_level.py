@@ -25,10 +25,11 @@ ground_image = pygame.image.load('img/4Ground.png')
 grass_image = pygame.image.load('img/grass.png')
 hedg_image = pygame.image.load('img/hedg1.png')
 bush_image = pygame.image.load('img/Bush.png')
+coin_img = pygame.image.load('img/crystal.png')
 
 exit_img = pygame.image.load('img/exit_door.png')
 save_img = pygame.image.load('img/saveLevel.png')
-load_img = pygame.image.load('img/load.png')
+load_img = pygame.image.load('img/loadLevel.png')
 
 # define game variables
 clicked = False
@@ -89,6 +90,10 @@ def draw_world():
                     # exit
                     img = pygame.transform.scale(exit_img, (55, 100))
                     screen.blit(img, (col * tile_size, row * tile_size - 45))
+                if world_data[row][col] == 5:
+                    # монетки
+                    img = pygame.transform.scale(coin_img, (32, 32))
+                    screen.blit(img, (col * tile_size + 10, row * tile_size + 30))
 
 
 class Button():
@@ -121,7 +126,7 @@ class Button():
 
 # create load and save buttons
 save_button = Button(500, 670, save_img)
-
+load_button = Button(300, 670, load_img)
 
 # main game loop
 run = True
@@ -146,6 +151,10 @@ while run:
         pickle_out = open(f'level{level}_data', 'wb')
         pickle.dump(world_data, pickle_out)
         pickle_out.close()
+    if load_button.draw():
+        if path.exists(f'level{level}_data'):
+            pickle_in = open(f'level{level}_data', 'rb')
+            world_data = pickle.load(pickle_in)
 
     # text showing current level
     draw_text(f'Level: {level}', font, white, tile_size, screen_height - 60)
@@ -167,12 +176,12 @@ while run:
                 # update tile value
                 if pygame.mouse.get_pressed()[0] == 1:
                     world_data[y][x] += 1
-                    if world_data[y][x] > 4:
+                    if world_data[y][x] > 5:
                         world_data[y][x] = 0
                 elif pygame.mouse.get_pressed()[2] == 1:
                     world_data[y][x] -= 1
                     if world_data[y][x] < 0:
-                        world_data[y][x] = 4
+                        world_data[y][x] = 5
         if event.type == pygame.MOUSEBUTTONUP:
             clicked = False
         # up and down key presses to change level number
