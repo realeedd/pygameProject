@@ -370,6 +370,7 @@ while run:
             if restart_button.draw():
                 player.reset(65, height - 130)
                 game_over = 0
+
         # прохождение уровня
         if game_over == 2:
             level += 1
