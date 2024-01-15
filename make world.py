@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 import pickle
+import sqlite3
 
 from os import path
 
@@ -62,6 +63,9 @@ third_image = pygame.image.load('img/third.png')
 fourth_image = pygame.image.load('img/fourth.png')
 fifth_image = pygame.image.load('img/fifth.png')
 
+#база данных
+con = sqlite3.connect("players.sqlite")
+cur = con.cursor()
 '''
 # рисуем клеточное поле
 def draw_board():
