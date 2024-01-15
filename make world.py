@@ -62,13 +62,13 @@ third_image = pygame.image.load('img/third.png')
 fourth_image = pygame.image.load('img/fourth.png')
 fifth_image = pygame.image.load('img/fifth.png')
 
-
+'''
 # рисуем клеточное поле
 def draw_board():
     for a in range(0, 12):
         pygame.draw.line(screen, (255, 255, 255), (0, a * tile_size), (width, a * tile_size))
         pygame.draw.line(screen, (255, 255, 255), (a * tile_size, 0), (a * tile_size, height))
-
+'''
 
 def draw_text(text, font, color, x, y):
     img = font.render(text, True, color)
@@ -212,7 +212,6 @@ class Player:
             draw_text('Вы погибли', font_game_over, red, (width // 2) - 220, height // 2)
         # рисуем персонажа на экран
         screen.blit(self.img, self.rect)
-        pygame.draw.rect(screen, (255, 255, 255), self.rect, 2)
 
         return game_over
 
@@ -272,7 +271,6 @@ class World():
     def draw(self):
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
-            pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -469,7 +467,6 @@ while run:
         screen.blit(bushes_image, (0, 0))
         screen.blit(ground_image, (0, 0))
         # рисуем поле
-        draw_board()
         world.draw()
 
         hedg_group.draw(screen)
