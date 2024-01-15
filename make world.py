@@ -63,9 +63,6 @@ third_image = pygame.image.load('img/third.png')
 fourth_image = pygame.image.load('img/fourth.png')
 fifth_image = pygame.image.load('img/fifth.png')
 
-#база данных
-con = sqlite3.connect("players.sqlite")
-cur = con.cursor()
 '''
 # рисуем клеточное поле
 def draw_board():
@@ -355,8 +352,12 @@ third_button = Button(width // 2 + 150, height // 2 - 100, third_image)
 fourth_button = Button(width // 2 - 200, height // 2 + 50, fourth_image)
 fifth_button = Button(width // 2 + 70, height // 2 + 50, fifth_image)
 
+con = sqlite3.connect("players.sqlite")
 
 def main():
+    global death_count
+    global player_name
+    player_name = ''
     screen.blit(menu_image, (0, 0))
     font = pygame.font.Font(None, 32)
     clock = pygame.time.Clock()
@@ -365,13 +366,11 @@ def main():
     color_active = pygame.Color('dodgerblue2')
     color = color_inactive
     active = False
-    text = ''
     done = False
-
     while not done:
         if exit_button.draw():
             pygame.quit()
-        if go_button.draw() and len(names) != 0:
+        if go_button.draw() and player_name != '':
             done = True
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -387,15 +386,31 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if active:
                     if event.key == pygame.K_RETURN:
-                        print(text)
-                        names.append(text)
-                        text = ''
+                        print(player_name)
+                        try:
+                            #добавить имя
+                            cur = con.cursor()
+                            points = cur.execute('''SELECT points FROM players
+                            WHERE name = ?''', (player_name,)).fetchall()
+                            if len(points) == 0:
+                                insert_data = """INSERT INTO players
+                                  (name, points)
+                                  VALUES
+                                  (?, ?)"""
+                                cur.execute(insert_data, (player_name, 0))
+                                con.commit()
+                                death_count = 0
+                            else:
+                                death_count = points[0][0]
+                                print(death_count)
+                        except Exception as error:
+                            print(error)
                     elif event.key == pygame.K_BACKSPACE:
-                        text = text[:-1]
+                        player_name = player_name[:-1]
                     else:
-                        text += event.unicode
+                        player_name += event.unicode
 
-        txt_surface = font.render(text, True, white)
+        txt_surface = font.render(player_name, True, white)
         width_text = max(200, txt_surface.get_width()+10)
         input_box.w = width_text
         draw_text('Кликните на окошко снизу,', font, white, (width - 610), (height - 590))
@@ -411,12 +426,13 @@ def main():
 if __name__ == '__main__':
     main()
 
-
+death_font = pygame.font.SysFont('Pixel Digivolve Cyrillic', 5)
 run = True
 while run:
     clock.tick(fps)
     screen.blit(menu_image, (0, 0))
 
+    draw_text(f'Количество смертей: {death_count}', font, white, (width - 600), (height - 200))
     if main_menu == True:
         if exit_button.draw():
             run = False
@@ -488,11 +504,20 @@ while run:
         game_over = player.update(game_over)
         # когда персонаж умирает
         if game_over == 1:
+
             if restart_button.draw():
                 world_data = []
                 player.reset(65, height - 130)
                 game_over = 0
                 k = 0
+                death_count += 1
+                cur = con.cursor()
+                insert_data = """UPDATE players
+                              SET points = ? WHERE name = ?"""
+                print(player_name)
+                cur.execute(insert_data, (death_count, player_name))
+                con.commit()
+                print(death_count)
 
         # прохождение уровня
         if game_over == 2:
