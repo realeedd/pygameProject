@@ -9,13 +9,37 @@ pygame.init()
 clock = pygame.time.Clock()
 fps = 60
 
+
+names = []
+
 width, height = 660, 660
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption('Magical Explore')
+pygame.display.set_caption('Wizard')
 
 # музыка
 pygame.mixer.music.load('img/Good Day So Far!.wav')
 pygame.mixer.music.play(-1, 0.0, 5000)
+pygame.mixer.music.set_volume(0.2)
+
+coin_sound = pygame.mixer.Sound('img/coin.wav')
+coin_sound.set_volume(0.5)
+jump_sound = pygame.mixer.Sound('img/jump.wav')
+jump_sound.set_volume(0.5)
+game_over_sound = pygame.mixer.Sound('img/game_over.wav')
+game_over_sound.set_volume(0.5)
+
+tile_size = 55
+game_over = 0
+main_menu = True
+level = 1
+levels_menu = False
+# количество монеток
+k = 0
+# для текста
+font = pygame.font.SysFont('Pixel Digivolve Cyrillic', 40)
+font_game_over = pygame.font.SysFont('Pixel Digivolve Cyrillic', 70)
+white = (255, 255, 255)
+red = pygame.Color('red')
 
 # фон
 sky_image = pygame.image.load('img/8Sky.png')
@@ -29,6 +53,7 @@ start_image = pygame.image.load('img/start.png')
 exit_image = pygame.image.load('img/exit.png')
 menu_image = pygame.image.load('img/menu.png')
 levels_image = pygame.image.load('img/levels.png')
+go_image = pygame.image.load('img/go.png')
 
 # значки уровней
 first_image = pygame.image.load('img/first.png')
@@ -36,19 +61,6 @@ second_image = pygame.image.load('img/second.png')
 third_image = pygame.image.load('img/third.png')
 fourth_image = pygame.image.load('img/fourth.png')
 fifth_image = pygame.image.load('img/fifth.png')
-
-tile_size = 55
-game_over = 0
-main_menu = True
-level = 1
-levels_menu = False
-#количество монеток
-k = 0
-#для текста
-font = pygame.font.SysFont('Pixel Digivolve Cyrillic', 40)
-font_game_over = pygame.font.SysFont('Pixel Digivolve Cyrillic', 70)
-white = (255, 255, 255)
-red = pygame.Color('red')
 
 
 # рисуем клеточное поле
@@ -69,6 +81,7 @@ def reset_level(level):
     hedg_group.empty()
     bushes_group.empty()
     exit_group.empty()
+    coin_group.empty()
     if path.exists(f'level{level}_data'):
         pickle_in = open(f'level{level}_data', 'rb')
         world_data = pickle.load(pickle_in)
@@ -139,6 +152,7 @@ class Player:
                 dx += 10
 
             if (key[pygame.K_SPACE] or key[pygame.K_UP]) and self.jump is False and self.free is False:
+                jump_sound.play()
                 self.vel_y = -16
                 self.jump = True
 
@@ -178,8 +192,10 @@ class Player:
             # cолкновение с врагами
             if pygame.sprite.spritecollide(self, hedg_group, False):
                 game_over = 1
+                game_over_sound.play()
             if pygame.sprite.spritecollide(self, bushes_group, False):
                 game_over = 1
+                game_over_sound.play()
                 # print(game_over)
             # прохождение уровня
             if pygame.sprite.spritecollide(self, exit_group, False):
@@ -248,7 +264,7 @@ class World():
                     exit = Exit(c_k * tile_size, r_k * tile_size - 45)
                     exit_group.add(exit)
                 if tile == 5:
-                    coin = Coins(c_k * tile_size + 20 , r_k * tile_size + 30)
+                    coin = Coins(c_k * tile_size + 20, r_k * tile_size + 30)
                     coin_group.add(coin)
                 c_k += 1
             r_k += 1
@@ -313,14 +329,13 @@ coin_group = pygame.sprite.Group()
 hedg_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
 
-coin_pic = Coins(tile_size //2, tile_size // 2)
+coin_pic = Coins(tile_size // 2, tile_size // 2)
 coin_group.add(coin_pic)
 
 # уровни
 if path.exists(f'level{level}_data'):
     pickle_in = open(f'level{level}_data', 'rb')
     world_data = pickle.load(pickle_in)
-
 world = World(world_data)
 
 # кнопки
@@ -328,6 +343,8 @@ start_button = Button(width // 2 - 320, height // 2 - 100, start_image)
 exit_button = Button(width // 2 + 120, height // 2 + 230, exit_image)
 levels_button = Button(width // 2 + - 320, height // 2, levels_image)
 restart_button = Button(width // 2 - 100, height // 2 + 150, restart_image)
+go_button = Button(width // 2 + - 320, height // 2, go_image)
+
 
 # кнопки выбора уровня
 first_button = Button(width // 2 - 300, height // 2 - 100, first_image)
@@ -335,6 +352,63 @@ second_button = Button(width // 2 - 100, height // 2 - 100, second_image)
 third_button = Button(width // 2 + 150, height // 2 - 100, third_image)
 fourth_button = Button(width // 2 - 200, height // 2 + 50, fourth_image)
 fifth_button = Button(width // 2 + 70, height // 2 + 50, fifth_image)
+
+
+def main():
+    screen.blit(menu_image, (0, 0))
+    font = pygame.font.Font(None, 32)
+    clock = pygame.time.Clock()
+    input_box = pygame.Rect(100, 200, 140, 32)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = pygame.Color('dodgerblue2')
+    color = color_inactive
+    active = False
+    text = ''
+    done = False
+
+    while not done:
+        if exit_button.draw():
+            pygame.quit()
+        if go_button.draw() and len(names) != 0:
+            done = True
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                #когда нажали на input()
+                if input_box.collidepoint(event.pos):
+                    active = not active
+                else:
+                    active = False
+                # меняет цвет input()
+                color = color_active if active else color_inactive
+            if event.type == pygame.KEYDOWN:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        print(text)
+                        names.append(text)
+                        text = ''
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                    else:
+                        text += event.unicode
+
+        txt_surface = font.render(text, True, white)
+        width_text = max(200, txt_surface.get_width()+10)
+        input_box.w = width_text
+        draw_text('Кликните на окошко снизу,', font, white, (width - 610), (height - 590))
+        draw_text('введите свой никнейм и нажмите клавишу ENTER', font, white, (width - 610), (height - 550))
+        draw_text('Для продолжения нажмите кнопку GO!', font, white, (width - 580), (height - 400))
+        screen.blit(txt_surface, (input_box.x+5, input_box.y+5))
+        pygame.draw.rect(screen, color, input_box, 2)
+
+        pygame.display.flip()
+        clock.tick(10)
+
+
+if __name__ == '__main__':
+    main()
+
 
 run = True
 while run:
@@ -349,7 +423,7 @@ while run:
         if levels_button.draw():
             main_menu = False
             levels_menu = True
-    #меню
+    # меню
     elif levels_menu == True:
         screen.blit(menu_image, (0, 0))
         if first_button.draw():
@@ -368,12 +442,24 @@ while run:
 
         if third_button.draw():
             levels_menu = False
+            level = 3
+            world_data = []
+            world = reset_level(level)
+            game_over = 0
 
         if fourth_button.draw():
             levels_menu = False
+            level = 4
+            world_data = []
+            world = reset_level(level)
+            game_over = 0
 
         if fifth_button.draw():
             levels_menu = False
+            level = 5
+            world_data = []
+            world = reset_level(level)
+            game_over = 0
 
     else:
         # загружаем фон
@@ -394,9 +480,9 @@ while run:
         if game_over == 0:
             hedg_group.update()
             if pygame.sprite.spritecollide(player, coin_group, True):
+                coin_sound.play()
                 k += 1
-            draw_text('X ' + str(k), font, white, tile_size , 10)
-
+            draw_text('X ' + str(k), font, white, tile_size, 10)
 
         game_over = player.update(game_over)
         # когда персонаж умирает
@@ -410,7 +496,7 @@ while run:
         # прохождение уровня
         if game_over == 2:
             level += 1
-            if level <= 2:
+            if level <= 5:
                 world_data = []
                 world = reset_level(level)
                 game_over = 0

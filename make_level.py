@@ -7,16 +7,14 @@ pygame.init()
 clock = pygame.time.Clock()
 fps = 60
 
-# game window
 tile_size = 55
 cols = 12
 margin = 100
-screen_width = 660
-screen_height = 720
-screen = pygame.display.set_mode((screen_width, screen_height))
+width = 660
+height = 720
+screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Level Editor')
 
-# load images
 sky_image = pygame.image.load('img/8Sky.png')
 hills_image = pygame.image.load('img/7Hills.png')
 forest_image = pygame.image.load('img/6Forest.png')
@@ -31,31 +29,26 @@ exit_img = pygame.image.load('img/exit_door.png')
 save_img = pygame.image.load('img/saveLevel.png')
 load_img = pygame.image.load('img/loadLevel.png')
 
-# define game variables
 clicked = False
 level = 1
 
-# define colours
 white = (255, 255, 255)
-green = (144, 201, 120)
+black = (0, 0, 0)
 
-font = pygame.font.SysFont('Futura', 24)
+font = pygame.font.SysFont('Pixel Digivolve Cyrillic', 10)
 
-# create empty tile list
 world_data = []
 for row in range(12):
     r = [0] * 12
     world_data.append(r)
 
-# create boundary
 for tile in range(0, 12):
     world_data[11][tile] = 1
-    world_data[0][tile] = 1
+    world_data[0][tile] = 0
     world_data[tile][0] = 1
     world_data[tile][11] = 1
 
 
-# function for outputting text onto the screen
 def draw_text(text, font, text_col, x, y):
     img = font.render(text, True, text_col)
     screen.blit(img, (x, y))
@@ -63,10 +56,8 @@ def draw_text(text, font, text_col, x, y):
 
 def draw_grid():
     for c in range(21):
-        # vertical lines
-        pygame.draw.line(screen, white, (c * tile_size, 0), (c * tile_size, screen_height - margin))
-        # horizontal lines
-        pygame.draw.line(screen, white, (0, c * tile_size), (screen_width, c * tile_size))
+        pygame.draw.line(screen, white, (c * tile_size, 0), (c * tile_size, height - margin))
+        pygame.draw.line(screen, white, (0, c * tile_size), (width, c * tile_size))
 
 
 def draw_world():
@@ -74,20 +65,20 @@ def draw_world():
         for col in range(12):
             if world_data[row][col] > 0:
                 if world_data[row][col] == 1:
-                    # grass blocks
+                    # земля
                     img = pygame.transform.scale(grass_image, (tile_size, tile_size))
                     screen.blit(img, (col * tile_size, row * tile_size))
                 if world_data[row][col] == 2:
-                    # enemy blocks
+                    # ежи
                     img = pygame.transform.scale(hedg_image, (tile_size, tile_size))
                     screen.blit(img, (col * tile_size, row * tile_size))
                 if world_data[row][col] == 3:
-                    # lava
+                    # кусты
                     img = pygame.transform.scale(bush_image, (65, 58))
                     screen.blit(img, (col * tile_size, row * tile_size))
 
                 if world_data[row][col] == 4:
-                    # exit
+                    # выход
                     img = pygame.transform.scale(exit_img, (55, 100))
                     screen.blit(img, (col * tile_size, row * tile_size - 45))
                 if world_data[row][col] == 5:
@@ -124,30 +115,26 @@ class Button():
         return action
 
 
-# create load and save buttons
 save_button = Button(500, 670, save_img)
-load_button = Button(300, 670, load_img)
+load_button = Button(350, 670, load_img)
 
-# main game loop
 run = True
 while run:
 
     clock.tick(fps)
 
-    # draw background
-    screen.fill(green)
+    screen.fill(black)
     screen.blit(sky_image, (0, 0))
     screen.blit(hills_image, (0, 0))
     screen.blit(forest_image, (0, 0))
     screen.blit(bushes_image, (0, 0))
     screen.blit(ground_image, (0, 0))
 
-    # show the grid and draw the level tiles
     draw_grid()
     draw_world()
 
     if save_button.draw():
-        # save level data
+        # сохранение или загрузка уровней
         pickle_out = open(f'level{level}_data', 'wb')
         pickle.dump(world_data, pickle_out)
         pickle_out.close()
@@ -156,22 +143,17 @@ while run:
             pickle_in = open(f'level{level}_data', 'rb')
             world_data = pickle.load(pickle_in)
 
-    # text showing current level
-    draw_text(f'Level: {level}', font, white, tile_size, screen_height - 60)
-    draw_text('Press UP or DOWN to change level', font, white, tile_size, screen_height - 40)
+    draw_text(f'Уровень: {level}', font, white, tile_size - 30, height - 60)
+    draw_text('Нажмите вверх или вниз чтобы сменить уровень', font, white, tile_size - 30, height - 40)
 
-    # event handler
     for event in pygame.event.get():
-        # quit game
         if event.type == pygame.QUIT:
             run = False
-        # mouseclicks to change tiles
         if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
             clicked = True
             pos = pygame.mouse.get_pos()
             x = pos[0] // tile_size
             y = pos[1] // tile_size
-            # check that the coordinates are within the tile area
             if x < 12 and y < 12:
                 # update tile value
                 if pygame.mouse.get_pressed()[0] == 1:
@@ -184,14 +166,12 @@ while run:
                         world_data[y][x] = 5
         if event.type == pygame.MOUSEBUTTONUP:
             clicked = False
-        # up and down key presses to change level number
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 level += 1
             elif event.key == pygame.K_DOWN and level > 1:
                 level -= 1
 
-    # update game display window
     pygame.display.update()
 
 pygame.quit()
